@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgis/postgis
+    platform: linux/amd64
+    volumes:
+      - .:/app
+      - postgres_data_local:/var/lib/postgresql/data
+      - postgres_backup_local:/backups
+    environment:
+      - POSTGRES_USER=location_api
+      - POSTGRES_DB=location_api
+      - POSTGRES_PASSWORD=location_api
+
+  django:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    environment:
+      - POSTGRES_USER=location_api
+      - POSTGRES_PASSWORD=location_api
+      - DJANGO_READ_DOT_ENV_FILE=True
+    ports:
+      - "8000:8000"
+    command: python -Wall example/manage.py runserver 0.0.0.0:8000
+
+volumes:
+  postgres_data_local: {}
+  postgres_backup_local: {}
