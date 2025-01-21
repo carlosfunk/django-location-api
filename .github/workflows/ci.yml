@@ -1,11 +1,17 @@
 name: CI
+
+env:
+  POSTGRES_USER: location_api
+  POSTGRES_DB: location_api
+  POSTGRES_PASSWORD: location_api
+
 on:
   pull_request:
     branches:
       - main
   push:
     branches:
-      - main
+      - '**'
 jobs:
   test:
     strategy:
@@ -13,57 +19,67 @@ jobs:
         python-version: ["3.12"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
+
+    services:
+      postgres:
+        image: postgis/postgis
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-    - name: "Set up python ${{ matrix.python-version }}"
-      id: setup-python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    #----------------------------------------------
-    #  -----  install & configure poetry  -----
-    #----------------------------------------------
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    #----------------------------------------------
-    #       load cached venv if cache exists
-    #----------------------------------------------
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-    #----------------------------------------------
-    # install dependencies if cache does not exist
-    #----------------------------------------------
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-    #----------------------------------------------
-    # install your root project, if required
-    #----------------------------------------------
-    - name: Install library
-      run: poetry install --no-interaction
-    #----------------------------------------------
-    #    Run tests
-    #----------------------------------------------
-    - name: Run tests
-      run: poetry run invoke test
-    #----------------------------------------------
-    #    Build docs
-    #----------------------------------------------
-    - name: Build docs
-      run: poetry run invoke docs
-    #----------------------------------------------
-    #    Deploy docs (if on main)
-    #----------------------------------------------
-    - name: Deploy docs 🚀
-      if: github.ref == 'refs/heads/main'
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: docs/_build
+     - uses: actions/checkout@v4
+     - name: Install poetry
+       run: pipx install poetry
+     - name: "Set up python ${{ matrix.python-version }}"
+       id: setup-python
+       uses: actions/setup-python@v5
+       with:
+         python-version: ${{ matrix.python-version }}
+         cache: 'poetry'
+     #----------------------------------------------
+     #  -----  cache and install os packages  -----
+     #----------------------------------------------
+     - name: Cache APT packages
+       uses: actions/cache@v4
+       with:
+         path: /var/cache/apt
+         key: ${{ runner.os }}-apt-${{ hashFiles('**/Dockerfile') }}
+         restore-keys: |
+           ${{ runner.os }}-apt-
+     - name: Cache APT package lists
+       uses: actions/cache@v4
+       with:
+         path: /var/lib/apt/lists
+         key: ${{ runner.os }}-apt-lists-${{ hashFiles('**/Dockerfile') }}
+         restore-keys: |
+           ${{ runner.os }}-apt-lists-
+     - name: Install system dependencies
+       run: |
+         sudo apt-get update
+         sudo apt-get install -y --no-install-recommends binutils libproj-dev gdal-bin libgeoip1 python3-gdal    
+     #----------------------------------------------
+     # install dependencies
+     #----------------------------------------------
+     - name: Install dependencies
+       run: poetry install --no-interaction --no-root
+     #----------------------------------------------
+     # install your root project, if required
+     #----------------------------------------------
+     - name: Install library
+       run: poetry install --no-interaction
+     #----------------------------------------------
+     # Run tests
+     #----------------------------------------------
+     - name: Run tests
+       env:
+         DATABASE_URL: "postgres://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@localhost:5432/${{ env.POSTGRES_DB }}"
+       run: poetry run python ./runtests.py
