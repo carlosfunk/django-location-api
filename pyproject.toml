@@ -33,6 +33,7 @@ python = ">=3.10,<4"
 django = "^4.2"
 djangorestframework = "^3.14.0"
 djangorestframework-gis = "^1.0"
+django-filter = "^24.3"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "*"
