@@ -2,16 +2,9 @@
 Django Location API
 ===================
 
+.. image:: https://github.com/carlosfunk/django-location-api/actions/workflows/ci.yml/badge.svg
+        :target: https://github.com/carlosfunk/django-location-api/actions/workflows/ci.yml
 
-.. image:: https://img.shields.io/pypi/v/django-location-api.svg
-        :target: https://pypi.python.org/pypi/django-location-api
-
-.. image:: https://img.shields.io/travis/carlosfunk/django-location-api.svg
-        :target: https://travis-ci.com/carlosfunk/django-location-api
-
-.. image:: https://readthedocs.org/projects/django-location-api/badge/?version=latest
-        :target: https://django-location-api.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
 
 Django package for location services.
 
@@ -20,7 +13,7 @@ Django package for location services.
 * Documentation: https://django-location-api.readthedocs.io.
 
 
-django-location-api is a Django app for location services. 
+django-location-api is a Django app for location services.
 
 Detailed documentation is in the "docs" directory.
 
