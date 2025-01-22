@@ -5,6 +5,8 @@ Django Location API
 .. image:: https://github.com/carlosfunk/django-location-api/actions/workflows/ci.yml/badge.svg
         :target: https://github.com/carlosfunk/django-location-api/actions/workflows/ci.yml
 
+.. image:: https://img.shields.io/pypi/v/django-location-api.svg
+        :target: https://pypi.python.org/pypi/django-location-api
 
 Django package for location services.
 
